@@ -3,7 +3,9 @@ name: Performance Bot
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-
+permissions:
+  contents: read
+  pull-requests: write
 jobs:
   perf-check:
     runs-on: ubuntu-latest
