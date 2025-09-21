@@ -22,7 +22,7 @@ jobs:
         id: get_preview
         run: |
           PREVIEW_URL=$(curl -s -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
-            "https://api.vercel.com/v13/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&target=preview" \
+            "https://api.vercel.com/v6/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&target=preview" \
             | jq -r '.deployments[0].url')
           echo "TARGET_URL=https://$PREVIEW_URL" >> $GITHUB_ENV
 
