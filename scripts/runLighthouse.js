@@ -1,12 +1,13 @@
-const lighthouse = (...args) => import('lighthouse').then(mod => mod.default(...args));
-const chromeLauncher = require("chrome-launcher");
-const fs = require("fs");
-// const puppeteer = require("puppeteer");  use puppeteer for local testing
+import lighthouse from 'lighthouse';
+import {launch } from 'chrome-launcher';
+import fs from 'fs';
+// import  puppeteer from "puppeteer";  // use puppeteer for local testing 
 
 const url = process.env.TARGET_URL || "https://left-shift-performance-git-main-kartick-dhalis-projects.vercel.app/";
 
 async function runLighthouse() {
-  const chrome = await chromeLauncher.launch({ chromeFlags: ["--headless", "--no-sandbox"] }); //chromePath: puppeteer.executablePath(), for local testing 
+  // const chromePath = puppeteer.executablePath();
+  const chrome = await launch({ chromeFlags: ["--headless", "--no-sandbox"] }); //chromePath: puppeteer.executablePath(), 
   const options = { logLevel: "info", output: "json", port: chrome.port };
   const runnerResult = await lighthouse(url, options);
 

@@ -19,7 +19,12 @@ jobs:
       - name: Install deps
         run: npm install
       - name: Get Vercel Preview URL
-        run: echo "TARGET_URL=https://left-shift-performance-git-${{ github.head_ref }}-kartick-dhalis-projects.vercel.app/" >> $GITHUB_ENV
+        id: get_preview
+        run: |
+          PREVIEW_URL=$(curl -s -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            "https://api.vercel.com/v13/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&target=preview" \
+            | jq -r '.deployments[0].url')
+          echo "TARGET_URL=https://$PREVIEW_URL" >> $GITHUB_ENV
 
       - name: Run Lighthouse
         run: npm run run-lighthouse
