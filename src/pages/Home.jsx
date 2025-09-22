@@ -1,28 +1,49 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 
+// Increased number of high-resolution images
 const images = [
-  "https://picsum.photos/1200/600?random=1",
-  "https://picsum.photos/1200/600?random=2",
-  "https://picsum.photos/1200/600?random=3"
+  "https://picsum.photos/2400/1200?random=1",
+  "https://picsum.photos/2400/1200?random=2",
+  "https://picsum.photos/2400/1200?random=3",
+  "https://picsum.photos/2400/1200?random=4",
+  "https://picsum.photos/2400/1200?random=5"
 ];
 
 export default function Home() {
   const [currentImage, setCurrentImage] = useState(0);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [layoutShift, setLayoutShift] = useState(0);
+
+  // Heavy computation to increase Total Blocking Time
+  const heavyComputation = () => {
+    let result = 0;
+    for(let i = 0; i < 10000000; i++) {
+      result += Math.sqrt(i);
+    }
+    return result;
+  };
 
   useEffect(() => {
-    // Image slider interval
+    // Reduced interval time causing more frequent updates
     const timer = setInterval(() => {
       setCurrentImage((prev) => (prev + 1) % images.length);
-    }, 5000);
+      heavyComputation(); // Block main thread
+    }, 1000);
 
-    // Fetch products
+    // Random layout shifts
+    const layoutTimer = setInterval(() => {
+      setLayoutShift(Math.random() * 50);
+    }, 2000);
+
+    // Delayed product fetching
     const fetchProducts = async () => {
       try {
-        const response = await fetch('https://fakestoreapi.com/products?limit=6');
+        await new Promise(resolve => setTimeout(resolve, 3000)); // Artificial delay
+        const response = await fetch('https://fakestoreapi.com/products');
         const data = await response.json();
+        // Load all products instead of limiting to 6
         setProducts(data);
         setLoading(false);
       } catch (error) {
@@ -32,27 +53,34 @@ export default function Home() {
     };
 
     fetchProducts();
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      clearInterval(layoutTimer);
+    };
   }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Hero Section */}
-      <div className="relative h-screen flex items-center justify-center overflow-hidden">
+      {/* Hero Section with dynamic height causing CLS */}
+      <div style={{ height: `calc(100vh + ${layoutShift}px)` }} className="relative flex items-center justify-center overflow-hidden">
         {images.map((img, index) => (
           <motion.div
             key={index}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: currentImage === index ? 1 : 0 }}
-            transition={{ duration: 1 }}
+            animate={{ 
+              opacity: currentImage === index ? 1 : 0,
+              scale: currentImage === index ? 1.2 : 0.8,
+              rotate: currentImage === index ? 360 : 0
+            }}
+            transition={{ duration: 0.5 }}
             className="absolute inset-0"
           >
+            {/* Remove width and height attributes to cause CLS */}
             <img
               src={img}
               alt={`Slide ${index + 1}`}
-              className="w-full h-full object-cover"
+              className="object-cover"
+              loading="eager" // Force eager loading instead of lazy
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/30" />
           </motion.div>
         ))}
 
@@ -92,41 +120,27 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Products Section */}
+      {/* Products Section with no image dimensions */}
       <section className="max-w-7xl mx-auto px-6 py-24">
-        <motion.h2 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          className="text-4xl font-bold text-center mb-4"
-        >
-          Featured Products
-        </motion.h2>
-        <p className="text-gray-600 text-center mb-12 max-w-2xl mx-auto">
-          Discover our carefully curated selection of premium products
-        </p>
-
         {loading ? (
           <div className="flex justify-center">
             <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {products.map((product) => (
               <motion.div
                 key={product.id}
-                whileHover={{ y: -5 }}
-                className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100"
+                whileHover={{ scale: 1.1 }} // Excessive animation
+                transition={{ duration: 0.3 }}
+                className="bg-white rounded-xl shadow-lg overflow-hidden"
               >
-                <div className="h-52 bg-gray-50 flex items-center justify-center p-6">
+                <div className="bg-gray-50 flex items-center justify-center p-6">
+                  {/* Remove image dimensions and lazy loading */}
                   <img 
                     src={product.image} 
                     alt={product.title}
-                    className="max-h-40 max-w-[140px] object-contain"
+                    className="object-contain"
                   />
                 </div>
                 <div className="p-6">
@@ -151,47 +165,30 @@ export default function Home() {
                 </div>
               </motion.div>
             ))}
-          </motion.div>
+          </div>
         )}
       </section>
 
-      {/* Features Section */}
+      {/* Features Section with heavy animations */}
       <section className="bg-white py-24">
         <div className="max-w-7xl mx-auto px-6">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="grid md:grid-cols-3 gap-12"
-          >
-            {[
-              {
-                icon: "⚡",
-                title: "Lightning Fast",
-                description: "Built with Vite for optimal performance"
-              },
-              {
-                icon: "🎨",
-                title: "Beautiful Design",
-                description: "Crafted with Tailwind CSS for modern aesthetics"
-              },
-              {
-                icon: "🚀",
-                title: "Easy to Deploy",
-                description: "Ready for production with minimal setup"
-              }
-            ].map((feature, index) => (
+          <div className="grid md:grid-cols-3 gap-12">
+            {Array.from({ length: 20 }).map((_, index) => (
               <motion.div
                 key={index}
-                whileHover={{ y: -5 }}
-                className="p-8 bg-gray-50 rounded-2xl shadow-lg text-center"
+                whileInView={{ 
+                  scale: [0, 1.2, 1],
+                  rotate: [0, 360],
+                  y: [-100, 0]
+                }}
+                transition={{ duration: 1 }}
+                className="p-8 bg-gray-50 rounded-2xl shadow-lg"
               >
-                <span className="text-4xl mb-4 block">{feature.icon}</span>
-                <h3 className="text-xl font-bold mb-4">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
+                <h3>Feature {index + 1}</h3>
+                <p>{heavyComputation()}</p> {/* Force computation on render */}
               </motion.div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
     </div>
